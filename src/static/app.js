@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Adiciona listeners para os botões de deletar após renderizar
+  // Add listeners for the delete buttons after rendering
   setTimeout(() => {
     document.querySelectorAll('.delete-participant').forEach(btn => {
       btn.addEventListener('click', async (e) => {
