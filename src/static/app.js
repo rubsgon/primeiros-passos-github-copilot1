@@ -20,11 +20,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
+        // Monta a lista de participantes como <ul>
+        let participantsHTML = "";
+        if (details.participants.length > 0) {
+          participantsHTML = `
+            <div class="participants-section">
+              <strong>Participantes:</strong>
+              <ul class="participants-list no-bullets">
+                ${details.participants.map(email => `
+                  <li>
+                    <span>${email}</span>
+                    <button class="delete-participant" title="Remover" data-activity="${name}" data-email="${email}">🗑️</button>
+                  </li>
+                `).join("")}
+              </ul>
+            </div>
+          `;
+        } else {
+          participantsHTML = `
+            <div class="participants-section">
+              <strong>Participantes:</strong>
+              <span class="no-participants">Nenhum participante inscrito ainda.</span>
+            </div>
+          `;
+        }
+
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Agenda:</strong> ${details.schedule}</p>
           <p><strong>Disponibilidade:</strong> ${spotsLeft} vagas disponíveis</p>
+          ${participantsHTML}
         `;
 
         activitiesList.appendChild(activityCard);
@@ -80,6 +106,36 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Erro na inscrição:", error);
     }
   });
+
+  // Adiciona listeners para os botões de deletar após renderizar
+  setTimeout(() => {
+    document.querySelectorAll('.delete-participant').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const activity = btn.getAttribute('data-activity');
+        const email = btn.getAttribute('data-email');
+        if (confirm(`Remover ${email} de ${activity}?`)) {
+          try {
+            const response = await fetch(`/activities/${encodeURIComponent(activity)}/remove?email=${encodeURIComponent(email)}`, { method: 'DELETE' });
+            const result = await response.json();
+            if (response.ok) {
+              messageDiv.textContent = result.message;
+              messageDiv.className = "success";
+            } else {
+              messageDiv.textContent = result.detail || "Erro ao remover participante.";
+              messageDiv.className = "error";
+            }
+            messageDiv.classList.remove("hidden");
+            setTimeout(() => messageDiv.classList.add("hidden"), 5000);
+            fetchActivities();
+          } catch (error) {
+            messageDiv.textContent = "Erro ao remover participante.";
+            messageDiv.className = "error";
+            messageDiv.classList.remove("hidden");
+          }
+        }
+      });
+    });
+  }, 0);
 
   // Initialize app
   fetchActivities();
